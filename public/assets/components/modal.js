@@ -37,7 +37,7 @@ class ModalComponent extends HTMLElement {
         await loadCSS(import.meta.url, "./modal.css");
     }
 
-    trigger($node, { withButtonsLeft = null, withButtonsRight = null, targetHeight = 0, onQuit = (_a, _b) => Promise.resolve() }) {
+    trigger($node, { withButtonsLeft = null, withButtonsRight = null, onQuit = (_a, _b) => Promise.resolve() }) {
         const close$ = new rxjs.Subject();
 
         // feature: build the dom
@@ -111,27 +111,6 @@ class ModalComponent extends HTMLElement {
                     { opacity: 1, transform: "translateY(0)" },
                 ],
             })),
-        ));
-
-        // feature: center horizontally
-        effect(rxjs.merge(
-            rxjs.fromEvent(window, "resize"),
-            rxjs.of(null),
-        ).pipe(
-            rxjs.distinct(() => document.body.offsetHeight),
-            rxjs.map(() => {
-                let size = targetHeight;
-                if (size === null) {
-                    const $box = document.querySelector("#modal-box > div");
-                    if ($box instanceof HTMLElement) size = $box.offsetHeight;
-                }
-                size = Math.round((document.body.offsetHeight - size) / 2);
-                if (size < 0) return 0;
-                if (size > 250) return 250;
-                return size;
-            }),
-            rxjs.map((size) => ["margin", `${size}px auto 0 auto`]),
-            applyMutation(qs(this, ".component_modal > div"), "style", "setProperty"),
         ));
 
         return (id) => close$.next(id);
