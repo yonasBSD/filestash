@@ -19,7 +19,7 @@ class ITable {
     getBody() { throw new Error("NOT_IMPLEMENTED"); }
 }
 
-export default async function(render, { mime, getDownloadUrl = nop, getFilename = nop, hasMenubar = true, acl$ }) {
+export default async function(render, { mime, getDownloadUrl = nop, getFilename = nop, hasMenubar = true, acl$ = rxjs.EMPTY }) {
     const $page = createElement(`
         <div class="component_tableviewer">
             <component-menubar filename="${getFilename()}" class="${!hasMenubar && "hidden"}"></component-menubar>
@@ -143,10 +143,15 @@ export default async function(render, { mime, getDownloadUrl = nop, getFilename 
     ));
 }
 
-export function init() {
+export function init($root) {
+    const priors = ($root && [
+        $root.classList.add("component_page_viewerpage"),
+        loadCSS(import.meta.url, "./component_menubar.css"),
+        loadCSS(import.meta.url, "../ctrl_viewerpage.css"),
+    ]);
     return Promise.all([
         loadCSS(import.meta.url, "./application_table.css"),
-        loadCSS(import.meta.url, "./component_menubar.css"),
+        ...priors,
     ]);
 }
 
