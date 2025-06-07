@@ -233,11 +233,6 @@ func ServeFile(chroot string) func(*App, http.ResponseWriter, *http.Request) {
 		)
 		head := res.Header()
 
-		if filePath == "/assets/bundle" {
-			ServeBundle(ctx, res, req)
-			return
-		}
-
 		// case: patch must be apply because of a "StaticPatch" plugin
 		if f := applyPatch(filePath); f != nil {
 			head.Set("Content-Type", GetMimeType(filepath.Ext(filePath)))
