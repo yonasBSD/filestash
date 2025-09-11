@@ -125,8 +125,8 @@ func (this Server) RegisterHandler(ctx *App, w http.ResponseWriter, r *http.Requ
 		"",
 	)
 	clientID := clientName + "." + Hash(clientName+time.Now().String(), 8)
-	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(struct {
 		ClientID                string   `json:"client_id"`
 		ClientSecret            string   `json:"client_secret"`
