@@ -609,7 +609,7 @@ func FileSave(ctx *App, res http.ResponseWriter, req *http.Request) {
 				return
 			} else if parts[0] == "sha1" {
 				hash = sha1.New()
-			} else if parts[1] == "crc32" {
+			} else if parts[0] == "crc32" {
 				hash = crc32.NewIEEE()
 			} else {
 				SendErrorResult(res, NewError("Bad Request", 400))
