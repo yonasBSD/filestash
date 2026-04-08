@@ -503,12 +503,16 @@ func (this *Configuration) MarshalJSON() ([]byte, error) {
 	})}.MarshalJSON()
 }
 
-func defaultValue[T string | int](dval T, envName string) T {
+func defaultValue[T string | int | bool](dval T, envName string) T {
 	if val := os.Getenv(envName); val != "" {
 		switch any(dval).(type) {
 		case int:
 			if n, err := strconv.Atoi(val); err == nil {
 				return any(n).(T)
+			}
+		case bool:
+			if b, err := strconv.ParseBool(val); err == nil {
+				return any(b).(T)
 			}
 		default:
 			return any(val).(T)
