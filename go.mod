@@ -26,6 +26,7 @@ require (
 	github.com/hirochachacha/go-smb2 v1.1.0
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.33
+	github.com/mickael-kerjean/goftp v0.0.0-20260409003738-bbc066a52c39
 	github.com/mickael-kerjean/net v0.0.0-20191120063050-2457c043ba06
 	github.com/mickael-kerjean/saml v0.0.0-20240603162924-4629e91322ce
 	github.com/mitchellh/hashstructure v1.1.0
