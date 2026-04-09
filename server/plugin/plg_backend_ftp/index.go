@@ -4,9 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	. "github.com/mickael-kerjean/filestash/server/common"
-	//"github.com/secsy/goftp" <- FTP issue with microsoft FTP
-	"github.com/prasad83/goftp"
 	"io"
 	"os"
 	"regexp"
@@ -14,6 +11,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	. "github.com/mickael-kerjean/filestash/server/common"
+	"github.com/mickael-kerjean/goftp"
 )
 
 var FtpCache AppCache
