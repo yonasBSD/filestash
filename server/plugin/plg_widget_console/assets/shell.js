@@ -16,6 +16,7 @@ class ComponentShell extends HTMLElement {
         this.$term = null;
         this.term = null;
         this.home = null;
+        this.cwd = "/";
         this.initialized = false;
         this.history = [];
         this.clear();
@@ -38,6 +39,11 @@ class ComponentShell extends HTMLElement {
     }
 
     attributeChangedCallback(name) {
+        if (name === "path") {
+            let path = this.getAttribute("path") || "/";
+            if (!path.endsWith("/")) path = path.slice(0, path.lastIndexOf("/") + 1);
+            this.cwd = path;
+        }
         this.bootstrap();
     }
 
@@ -80,7 +86,7 @@ class ComponentShell extends HTMLElement {
 
     onKey(key, ev) {
         if (ev.ctrlKey && ev.key === "c") {
-            this.term.write("^C");
+            this.term.writeln("^C");
             if (this.running) {
                 try { this.running(); } catch (err) { /* ignore */ }
                 this.running = null;
@@ -92,21 +98,37 @@ class ComponentShell extends HTMLElement {
             return;
         }
 
-        if (ev.ctrlKey && ev.key === "a") {
+        if (ev.altKey && ev.key === "b") {
+            let i = this.cursor - 1;
+            while (i > 0 && this.line[i - 1] === " ") i--;
+            while (i > 0 && this.line[i - 1] !== " ") i--;
+            this.moveCursor(i - this.cursor);
+            return;
+        } else if (ev.altKey && ev.key === "f") {
+            let i = this.cursor;
+            while (i < this.line.length && this.line[i] === " ") i++;
+            while (i < this.line.length && this.line[i] !== " ") i++;
+            this.moveCursor(i - this.cursor);
+            return;
+        } else if (ev.ctrlKey && ev.key === "a") {
             this.moveCursor(-this.cursor);
             return;
         } else if (ev.ctrlKey && ev.key === "e") {
             this.moveCursor(this.line.length - this.cursor);
+            return;
+        } else if (ev.ctrlKey && ev.key === "k") {
+            this.line = this.line.slice(0, this.cursor);
+            this.redrawLine();
             return;
         } else if (ev.ctrlKey && ev.key === "l") {
             this.term.clear();
             this.redrawLine();
             return;
         } else if (ev.key === "Enter") {
+            this.term.write("\r\n");
             const input = this.line.trim();
             if (input !== "") {
                 this.history.push(input);
-                this.term.write("\r\n");
                 const [id, ...args] = input.split(/\s+/);
                 const command = getCommand(id);
                 if (command) {
@@ -161,8 +183,7 @@ class ComponentShell extends HTMLElement {
     }
 
     getPrompt() {
-        let path = this.getAttribute("path") || "";
-        if (!path.endsWith("/")) path = path.slice(0, path.lastIndexOf("/") + 1);
+        let path = this.cwd;
         if (this.home && path.startsWith(this.home)) {
             path = "~/" + path.slice(this.home.length);
         }
@@ -172,7 +193,7 @@ class ComponentShell extends HTMLElement {
     prompt() {
         this.running = null;
         this.clear();
-        this.term.write(`\r\n${this.getPrompt()}`);
+        this.term.write(this.getPrompt());
         this.term.fit();
     }
 

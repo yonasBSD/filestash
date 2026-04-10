@@ -9,7 +9,7 @@ component-shell {
     display: block;
     padding: 16px 10px 10px;
     width: 100%;
-    z-index: 3;
+    z-index: 5;
     height: 450px;
     box-sizing: border-box;
 }
