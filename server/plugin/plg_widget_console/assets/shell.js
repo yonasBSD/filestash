@@ -127,14 +127,14 @@ class ComponentShell extends HTMLElement {
 
         if (ev.altKey && ev.key === "b") {
             let i = this.cursor - 1;
-            while (i > 0 && this.line[i - 1] === " ") i--;
-            while (i > 0 && this.line[i - 1] !== " ") i--;
+            while (i > 0 && " /".indexOf(this.line[i - 1]) !== -1) i--;
+            while (i > 0 && " /".indexOf(this.line[i - 1]) === -1) i--;
             this.moveCursor(i - this.cursor);
             return;
         } else if (ev.altKey && ev.key === "f") {
             let i = this.cursor;
-            while (i < this.line.length && this.line[i] === " ") i++;
-            while (i < this.line.length && this.line[i] !== " ") i++;
+            while (i < this.line.length && " /".indexOf(this.line[i]) !== -1) i++;
+            while (i < this.line.length && " /".indexOf(this.line[i]) === -1) i++;
             this.moveCursor(i - this.cursor);
             return;
         } else if (ev.ctrlKey && ev.key === "a") {
@@ -142,6 +142,9 @@ class ComponentShell extends HTMLElement {
             return;
         } else if (ev.ctrlKey && ev.key === "e") {
             this.moveCursor(this.line.length - this.cursor);
+            return;
+        } else if (ev.ctrlKey && ev.key === "d") {
+            this.deleteAtCursor(0);
             return;
         } else if (ev.ctrlKey && ev.key === "k") {
             this.line = this.line.slice(0, this.cursor);
@@ -193,13 +196,19 @@ class ComponentShell extends HTMLElement {
             return;
         } else if (ev.key === "Tab") {
             if (ev.preventDefault) ev.preventDefault();
-            const matches = allCommands().map((c) => c.id).filter((id) => id.startsWith(this.line));
-            if (matches.length === 1) this.replaceLine(matches[0]);
-            else if (matches.length > 1) {
-                this.term.write("\r\n");
-                this.term.writeln(matches.join("  "));
-                this.redrawLine();
+            const parts = this.line.split(/\s+/);
+            if (parts.length <= 1) {
+                const matches = allCommands().map((c) => c.id).filter((id) => id.startsWith(this.line));
+                if (matches.length === 1) this.replaceLine(matches[0] + " ");
+                else if (matches.length > 1) {
+                    this.term.write("\r\n");
+                    this.term.writeln(matches.join("  "));
+                    this.redrawLine();
+                }
+                return;
             }
+            const cmd = getCommand(parts[0]);
+            if (cmd && cmd.complete) cmd.complete(this, parts.slice(1).join(" "));
             return;
         }
 

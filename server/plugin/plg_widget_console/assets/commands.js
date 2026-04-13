@@ -64,6 +64,7 @@ register({
 register({
     id: "mimetype",
     description: "Determine file type",
+    complete: complete(() => true),
     run(shell, args) {
         if (!args[0]) {
             shell.term.writeln("mimetype: missing operand");
@@ -156,13 +157,13 @@ register({
 register({
     id: "cd",
     description: "Change working directory",
+    complete: complete(({ type }) => type === "directory"),
     run(shell, args) {
         if (!args[0]) {
             shell.cwd = shell.home || "/";
             return;
         }
-        const path = join(window.location.origin + shell.cwd, args[0])
-              .replace(new RegExp("\/?$"), "/");
+        const path = join(window.location.origin + shell.cwd, args[0]).replace(new RegExp("\/?$"), "/");
         const sub = stat("api/files/cat?path=" + encodeURIComponent(path)).subscribe({
             next({ type }) {
                 if (type !== "directory") shell.term.writeln("cd: not a directory");
@@ -178,6 +179,7 @@ register({
 register({
     id: "ls",
     description: "List directory contents",
+    complete: complete(({ type }) => type === "directory"),
     run(shell, args) {
         const path = args[0] ?
               join(window.location.origin + shell.cwd, args[0]).replace(new RegExp("\/?$"), "/")
@@ -208,6 +210,7 @@ register({
 register({
     id: "stat",
     description: "Display file info",
+    complete: complete(() => true),
     run(shell, args) {
         if (!args[0]) {
             shell.term.writeln("stat: missing operand");
@@ -231,6 +234,7 @@ register({
 register({
     id: "cat",
     description: "Display file contents",
+    complete: complete(() => true),
     run(shell, args) {
         if (!args[0]) {
             shell.term.writeln("cat: missing operand");
@@ -254,3 +258,36 @@ register({
         return () => sub.unsubscribe();
     },
 });
+
+function complete(filter) {
+    return function (shell, partial) {
+        const slashIdx = partial.lastIndexOf("/") + 1;
+        const [dir, prefix] = [
+            partial.slice(0, slashIdx),
+            partial.slice(slashIdx),
+        ];
+        ls(join(window.location.origin + shell.cwd, dir)).pipe(
+            rxjs.debounceTime(100),
+            rxjs.first(),
+            rxjs.catchError(() => rxjs.EMPTY),
+            rxjs.map(({ files }) => files
+                .filter((f) => filter(f) && f.name.startsWith(prefix))
+                .map((f) => f.name + (f.type === "directory" ? "/" : ""))),
+        ).subscribe((matches) => {
+            switch (matches.length) {
+            case 0:
+                return;
+            case 1:
+                const parts = shell.line.split(/\s+/);
+                parts[parts.length - 1] = dir + matches[0];
+                shell.replaceLine(parts.join(" "));
+                return;
+            default:
+                shell.term.write("\r\n");
+                shell.term.writeln(matches.join("  "));
+                shell.redrawLine();
+                return;
+            }
+        });
+    };
+}
