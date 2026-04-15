@@ -159,10 +159,15 @@ class ComponentShell extends HTMLElement {
             const input = this.line.trim();
             if (input !== "") {
                 this.history.push(input);
-                const [id, ...args] = input.split(/\s+/);
+                const [id, ...args] = input.split(new RegExp("\\s+"));
                 const command = getCommand(id);
                 if (command) {
-                    this.running = command.run(this, args);
+                    this.running = command.run(this, {
+                        args: args.filter((arg) => !arg.startsWith("-")),
+                        hasOption: (opt) => args
+                            .filter((arg) => arg.startsWith("-") && arg.indexOf(opt) !== -1)
+                            .length > 0
+                    });
                     if (!this.running) this.prompt();
                     return;
                 }

@@ -158,7 +158,7 @@ register({
     id: "cd",
     description: "Change working directory",
     complete: complete(({ type }) => type === "directory"),
-    run(shell, args) {
+    run(shell, { args }) {
         if (!args[0]) {
             shell.cwd = shell.home || "/";
             return;
@@ -180,7 +180,12 @@ register({
     id: "ls",
     description: "List directory contents",
     complete: complete(({ type }) => type === "directory"),
-    run(shell, args) {
+    run(shell, { args, hasOption }) {
+        const opts = {
+            "all": hasOption("a"),
+            "long": hasOption("l"),
+            "human": hasOption("h"),
+        };
         const path = args[0] ?
               join(window.location.origin + shell.cwd, args[0]).replace(new RegExp("\/?$"), "/")
               : shell.cwd;
@@ -193,12 +198,39 @@ register({
                 return rxjs.EMPTY;
             }),
         ).subscribe({
-            next({ files }) {
-                const output = files.map((entry) =>
-                    entry.type === "directory"
-                        ? `\x1b[1;34m${entry.name}\x1b[0m`
-                        : entry.name
-                ).join("  ");
+            next({ files, permissions }) {
+                const output = files
+                      .filter(({ name }) => name.startsWith(".") ? opts["all"] : true)
+                      .map(({ type, name, size, time, offline }) => {
+                          const isDir = type === "directory";
+                          if (!opts["long"]) return isDir ? `\x1b[1;34m${name}\x1b[0m` : name;
+                          const perm = (function () {
+                              let out = "";
+                              out += (isDir ? "d" : "-");
+                              out += (isDir ? "r" : (offline ? "-" : "r"));
+                              out += (isDir && (permissions["can_create_directory"] !== false)) ? "w" :
+                                  (!isDir && (permissions["can_create_file"] !== false)) ? "w" :
+                                  "-";
+                              out += (isDir ? "x" : "-");
+                              return out;
+                          }());
+                          const n = isDir ? `\x1b[1;34m${name}\x1b[0m` : name;
+                          const s = isDir ? "-" : opts["human"] ? (function (bytes) {
+                              if (bytes < 1024) return bytes + "B";
+                              if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + "K";
+                              if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + "M";
+                              return (bytes / (1024 * 1024 * 1024)).toFixed(1) + "G";
+                          }(size)) : `${size}`;
+                          const d = (function (t) {
+                              const dt = new Date(t);
+                              const month = dt.toLocaleDateString("en-US", { month: "short" });
+                              const day = String(dt.getDate()).padStart(2);
+                              const hr = dt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+                              return `${month} ${day} ${hr}`;
+                          })(time);
+                          return `${perm}  ${s.padStart(8)}  ${d}  ${n}`;
+                      })
+                      .join(opts["long"] ? "\r\n" : "  ");
                 shell.term.writeln(output);
             },
             complete() { shell.prompt(); },
@@ -211,7 +243,7 @@ register({
     id: "stat",
     description: "Display file info",
     complete: complete(() => true),
-    run(shell, args) {
+    run(shell, { args }) {
         if (!args[0]) {
             shell.term.writeln("stat: missing operand");
             return;
@@ -235,7 +267,7 @@ register({
     id: "cat",
     description: "Display file contents",
     complete: complete(() => true),
-    run(shell, args) {
+    run(shell, { args }) {
         if (!args[0]) {
             shell.term.writeln("cat: missing operand");
             return;
