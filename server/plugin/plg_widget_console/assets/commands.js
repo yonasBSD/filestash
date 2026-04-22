@@ -66,7 +66,7 @@ register({
     id: "mimetype",
     description: "Determine file type",
     complete: complete(() => true),
-    run(shell, args) {
+    run(shell, { args }) {
         if (!args[0]) {
             shell.term.writeln("mimetype: missing operand");
             return;

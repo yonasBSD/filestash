@@ -30,7 +30,7 @@ export const stat = (url) => ajax({
     url: forwardURLParams(url, ["share"]),
     method: "HEAD",
 }).pipe(rxjs.map(({ responseHeaders }) => ({
-    size: parseInt(responseHeaders["content-length"]),
+    size: parseInt(responseHeaders["content-length"]) || 0,
     type: responseHeaders["content-type"].trim() === "inode/directory" ? "directory" : "file",
     time: new Date(responseHeaders["last-modified"]).getTime(),
 })));
