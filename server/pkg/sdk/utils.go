@@ -19,11 +19,7 @@ func (this Filestash) request(method string, url string, body io.Reader) (io.Rea
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", this.Token))
 	req.Header.Set("X-Requested-With", "XmlHttpRequest")
 
-	opts := []HTTPClientOption{WithoutTimeout}
-	if this.Insecure {
-		opts = append(opts, WithInsecure)
-	}
-	resp, err := HTTPClient(opts...).Do(req)
+	resp, err := this.Client.Do(req)
 	if err != nil {
 		return nil, nil, err
 	}
