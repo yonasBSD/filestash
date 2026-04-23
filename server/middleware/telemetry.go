@@ -83,7 +83,11 @@ func logger(ctx *App, res http.ResponseWriter, req *http.Request) {
 			telemetry.Record(point)
 		}
 		if Config.Get("log.enable").Bool() {
-			Log.Stdout("HTTP %3d %3s %6.1fms %s", point.Status, point.Method, point.Duration, limit(point.RequestURI, 200))
+			tid := ""
+			if point.RequestID != "" && Config.Get("log.level").String() == "DEBUG" {
+				tid = "trace=" + point.RequestID
+			}
+			Log.Stdout("HTTP %3d %3s %6.1fms %s %s", point.Status, point.Method, point.Duration, limit(point.RequestURI, 200), tid)
 		}
 	}
 }

@@ -16,6 +16,9 @@ func ApiHeaders(fn HandlerFunc) HandlerFunc {
 		header := res.Header()
 		header.Set("Content-Type", "application/json")
 		header.Set("Cache-Control", "no-cache")
+		if id := req.Header.Get("X-Request-ID"); id != "" {
+			header.Set("X-Request-ID", id)
+		}
 		fn(ctx, res, req)
 	})
 }

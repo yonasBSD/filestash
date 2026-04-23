@@ -8,11 +8,17 @@ import (
 )
 
 type Filestash struct {
-	Token    string
-	URL      string
-	Insecure bool
-	Storage  string
-	Client   *http.Client
+	Token     string
+	URL       string
+	Insecure  bool
+	Storage   string
+	Client    *http.Client
+	RequestID string
+}
+
+func (this Filestash) WithRequestID(id string) Filestash {
+	this.RequestID = id
+	return this
 }
 
 func NewClient() Filestash {
