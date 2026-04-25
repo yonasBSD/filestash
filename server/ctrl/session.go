@@ -65,8 +65,7 @@ func SessionAuthenticate(ctx *App, res http.ResponseWriter, req *http.Request) {
 	if obj, ok := backend.(interface {
 		OAuthToken(*map[string]interface{}) error
 	}); ok {
-		err := obj.OAuthToken(&ctx.Body)
-		if err != nil {
+		if err := obj.OAuthToken(&ctx.Body); err != nil {
 			Log.Debug("[auth] action=authenticate::oauthtoken err=%s", ferror(err))
 			SendErrorResult(res, NewError("Can't authenticate (OAuth error)", 401))
 			return
