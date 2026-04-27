@@ -22,7 +22,7 @@ pipeline {
         stage("Build") {
             steps {
                 script {
-                    docker.image("golang:1.24-bookworm").inside("--user=root") {
+                    docker.image("golang:1.26-bookworm").inside("--user=root") {
                         sh "apt update -y && apt install -y libbrotli-dev brotli"
                         sh "sed -i 's|plg_image_c|plg_image_golang|' server/plugin/index.go"
                         sh "make init"
