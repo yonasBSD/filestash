@@ -30,7 +30,7 @@ func LoadConfig() ([]byte, error) {
 	file, err := os.OpenFile(GetAbsolutePath(CONFIG_PATH, "config.json"), os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		if os.IsNotExist(err) {
-			os.MkdirAll(GetAbsolutePath(CONFIG_PATH), os.ModePerm)
+			os.MkdirAll(GetAbsolutePath(CONFIG_PATH), 0770)
 			return []byte(""), nil
 		}
 		return nil, err
@@ -69,7 +69,7 @@ func LoadConfig() ([]byte, error) {
 }
 
 func SaveConfig(v []byte) error {
-	file, err := os.Create(GetAbsolutePath(CONFIG_PATH, "config.json"))
+	file, err := os.OpenFile(GetAbsolutePath(CONFIG_PATH, "config.json"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0660)
 	if err != nil {
 		return fmt.Errorf(
 			APPNAME+" needs to be able to create and edit its configuration, but it currently cannot. "+
@@ -110,4 +110,15 @@ func SaveConfig(v []byte) error {
 		return err
 	}
 	return file.Close()
+}
+
+func init() {
+	Hooks.Register.Onload(func() {
+		if err := os.Chmod(GetAbsolutePath(CONFIG_PATH), 0770); err != nil && os.IsNotExist(err) == false {
+			Log.Warning("common::config_state::onload cannot chmod config directory: %s", err.Error())
+		}
+		if err := os.Chmod(GetAbsolutePath(CONFIG_PATH, "config.json"), 0660); err != nil && os.IsNotExist(err) == false {
+			Log.Warning("common::config_state::onload cannot chmod config file: %s", err.Error())
+		}
+	})
 }

@@ -9,20 +9,21 @@ import (
 )
 
 func init() {
-	Backend.Register("local", &Local{})
+	Backend.Register("local", &Local{os.Getenv("LOCAL_BACKEND_SECRET")})
 }
 
-type Local struct{}
+type Local struct {
+	secret string
+}
 
 func (this Local) Init(params map[string]string, app *App) (IBackend, error) {
-	backend := &Local{}
-	if params["password"] == Config.Get("general.secret_key").String() {
-		return backend, nil
-	} else if err := bcrypt.CompareHashAndPassword(
+	if err := bcrypt.CompareHashAndPassword(
 		[]byte(Config.Get("auth.admin").String()),
 		[]byte(params["password"]),
 	); err == nil {
-		return backend, nil
+		return &Local{}, nil
+	} else if this.secret != "" && params["password"] == this.secret {
+		return &Local{}, nil
 	}
 	return nil, ErrAuthenticationFailed
 }
